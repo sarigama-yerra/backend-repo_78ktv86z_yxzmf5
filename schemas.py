@@ -1,48 +1,36 @@
 """
-Database Schemas
+Database Schemas for the Dating App
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model maps to a MongoDB collection (lowercased class name).
+- User -> "user"
+- Like -> "like"
+- Match -> "match"
+- Message -> "message"
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Literal
 
-# Example schemas (replace with your own):
+Gender = Literal["male", "female"]
+Seeking = Literal["male", "female", "both"]
 
 class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    name: str = Field(..., min_length=1, max_length=60, description="Display name")
+    gender: Gender = Field(..., description="User gender")
+    seeking: Seeking = Field(..., description="Who the user wants to match with")
+    bio: Optional[str] = Field(None, max_length=280, description="Short bio")
+    avatar_url: Optional[str] = Field(None, description="Avatar image URL")
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+class Like(BaseModel):
+    liker_id: str = Field(..., description="User ID who liked")
+    liked_id: str = Field(..., description="User ID who was liked")
 
-# Add your own schemas here:
-# --------------------------------------------------
+class Match(BaseModel):
+    user1_id: str = Field(..., description="First user ID")
+    user2_id: str = Field(..., description="Second user ID")
+    allow_both_first_move: bool = Field(True, description="Whether both can message first")
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Message(BaseModel):
+    match_id: str = Field(..., description="Match ID")
+    sender_id: str = Field(..., description="Sender user ID")
+    text: str = Field(..., min_length=1, max_length=1000, description="Message text")
